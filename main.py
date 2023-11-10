@@ -1,10 +1,19 @@
 import cv2
+import glob
+import os
 from emailing import send_email
 
 video = cv2.VideoCapture(0)
 
 first_frame = None
 status_list = []
+count = 1
+
+def clean_folder():
+    images = glob.glob("images/*.png")
+    for image in images:
+        os.remove(image)
+
 while True:
     status = 0
     check, frame = video.read()
@@ -27,11 +36,17 @@ while True:
         rectangle = cv2.rectangle(frame, (x,y), (x+w, y+h), (0, 255, 0), 3)
         if rectangle.any():
             status = 1
+            cv2.imwrite(f"images/{count}.png", frame)
+            count += 1
 
     status_list.append(status)
     status_list = status_list[-2:]
     if status_list == [1, 0]:
-        send_email()
+        all_images = glob.glob("images/*.png")
+        index = int(len(all_images)/2)
+        image_to_send = all_images[index]
+        send_email(image_to_send)
+        clean_folder()
 
     cv2.imshow("My video", frame)
 
